@@ -1,0 +1,4 @@
+# NexusAgent 当前为零运行时依赖（仅用 Python 标准库）。
+# 接入真实 LLM 后端时，按需取消注释对应 SDK：
+# openai>=1.0
+# zhipuai>=2.0
