@@ -23,4 +23,5 @@ jobs:
       - name: Import smoke + example run
         run: |
           python -c "import agent; assert agent.run('calc 1+2*3') == '7'"
-          python -m py_compile agent.py
+          python -c "import tools; assert tools.web_fetch('ftp://x') == '仅支持 http/https 链接'; assert '文件不存在' in tools.read_file('./no-such-file.txt')"
+          python -m py_compile agent.py tools.py examples/demo.py

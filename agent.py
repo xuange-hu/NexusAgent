@@ -67,10 +67,17 @@ def echo(text: str) -> str:
 
 
 def rule_based_plan(query: str) -> tuple[str, str]:
-    """无 LLM 时的本地规则规划：识别意图 -> (tool, arg)。"""
+    """无 LLM 时的本地规则规划：识别意图 -> (tool, arg)。
+
+    离线规则只能覆盖少量显式前缀；更复杂的意图需要接入 ``llm`` 回调。
+    """
     q = query.strip()
     if q.lower().startswith("calc "):
         return "calc", q.split("calc ", 1)[-1]
+    if q.lower().startswith("web_fetch "):
+        return "web_fetch", q.split("web_fetch ", 1)[-1]
+    if q.lower().startswith("read_file "):
+        return "read_file", q.split("read_file ", 1)[-1]
     if any(ch.isdigit() for ch in q) and any(c in q for c in "+-*/()"):
         return "calc", q
     return "echo", q
