@@ -25,6 +25,9 @@ class Tool:
     func: Callable[[str], str]
 
 
+__version__ = "0.1.0"
+
+
 class ToolRegistry:
     def __init__(self) -> None:
         self._tools: dict[str, Tool] = {}
@@ -78,6 +81,8 @@ def rule_based_plan(query: str) -> tuple[str, str]:
         return "web_fetch", q.split("web_fetch ", 1)[-1]
     if q.lower().startswith("read_file "):
         return "read_file", q.split("read_file ", 1)[-1]
+    if q.lower().startswith("echo "):
+        return "echo", q.split("echo ", 1)[-1]
     if any(ch.isdigit() for ch in q) and any(c in q for c in "+-*/()"):
         return "calc", q
     return "echo", q

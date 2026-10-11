@@ -20,6 +20,12 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install test deps
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run pytest suite
+        run: python -m pytest tests -q
+
       - name: Import smoke + example run
         run: |
           python -c "import agent; assert agent.run('calc 1+2*3') == '7'"
