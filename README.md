@@ -11,6 +11,54 @@
 the agent loop plans-then-dispatches. Zero runtime dependencies — the offline rule mode runs as-is,
 and plugging in an LLM callback upgrades it to natural-language driven.
 
+## 能力一览
+
+| 工具 | 说明 | 依赖 |
+|---|---|---|
+| `calc` | 计算数学表达式（字符白名单，规避 `eval` 任意执行风险） | 标准库 |
+| `echo` | 原样返回输入，便于调试 | — |
+| `web_fetch` | 抓取 http/https 网页前若干字符 | 标准库 |
+| `read_file` | 读取本地文本文件前若干字符 | 标准库 |
+| `remember` / `recall` / `forget` | **有状态**记忆：跨调用保留键值对 | 进程内字典 |
+
+## 记忆工具（有状态）
+
+```
+> remember user=xuange
+已记住 user
+> echo 中间做了别的事
+中间做了别的事
+> recall user
+xuange
+```
+
+记忆默认存在进程内字典里（重启即清空）。要持久化，把 `tools.py` 里的
+`_MEMORY` 换成 SQLite / Redis 即可——`remember`/`recall`/`forget` 的对外契约不变。
+
+## 接入真实 LLM
+
+`llm_adapters.py` 用**标准库**把 OpenAI 兼容接口包装成 `run()` 需要的回调，
+不引入任何 SDK，保持"零运行时依赖"。密钥从环境变量读取，且默认只允许 https 端点。
+
+```python
+from agent import run
+from llm_adapters import make_openai_llm
+
+llm = make_openai_llm(model="gpt-4o-mini")   # 读取 OPENAI_API_KEY
+print(run("六乘七等于多少", llm=llm))
+```
+
+回调签名：`llm(query: str, tool_desc: str) -> (tool_name, arg)`。
+模型输出会被稳健解析（容忍 markdown 围栏与前后废话），解析失败时退化为 `echo`。
+
+## 路线图
+
+- [ ] 对话记忆 / 多轮上下文
+- [ ] 多 Agent 协作
+- [ ] MCP 工具接入
+- [ ] 检索增强（RAG）
+
+
 ---
 
 ## ✨ 它演示了什么 / What it demonstrates

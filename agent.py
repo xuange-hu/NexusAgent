@@ -25,7 +25,7 @@ class Tool:
     func: Callable[[str], str]
 
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
 class ToolRegistry:
@@ -83,6 +83,13 @@ def rule_based_plan(query: str) -> tuple[str, str]:
         return "read_file", q.split("read_file ", 1)[-1]
     if q.lower().startswith("echo "):
         return "echo", q.split("echo ", 1)[-1]
+    # 记忆类前缀要排在"含数字即 calc"规则之前，避免 remember a=1+2 被误判为算式
+    if q.lower().startswith("remember "):
+        return "remember", q.split("remember ", 1)[-1]
+    if q.lower().startswith("recall "):
+        return "recall", q.split("recall ", 1)[-1]
+    if q.lower().startswith("forget "):
+        return "forget", q.split("forget ", 1)[-1]
     if any(ch.isdigit() for ch in q) and any(c in q for c in "+-*/()"):
         return "calc", q
     return "echo", q
@@ -99,6 +106,14 @@ def run(query: str, llm=None) -> str:
     else:
         tool, arg = llm(query, registry.describe())
     return registry.dispatch(tool, arg)
+
+
+# 让 web_fetch / read_file / 记忆工具在导入本模块时一并注册。
+# 放在文件末尾以避开循环导入（tools 需要本模块已定义好的 registry）。
+try:  # pragma: no cover - 可选能力，缺失不应导致骨架不可用
+    import tools  # noqa: F401
+except Exception:  # pragma: no cover
+    pass
 
 
 def main() -> None:

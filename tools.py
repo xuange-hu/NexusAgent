@@ -37,3 +37,49 @@ def read_file(path: str) -> str:
         return text[:_MAX_CHARS]
     except Exception as exc:
         return f"读取失败: {exc}"
+
+
+# --------------------------------------------------------------------------
+# 记忆工具：演示 Agent 的"有状态"能力（跨轮次保留信息）。
+# 进程内字典，重启即清空——刻意保持最小实现，便于替换为 Redis / SQLite。
+# --------------------------------------------------------------------------
+
+_MEMORY: dict[str, str] = {}
+
+
+@registry.register("remember", "记住一个键值对，如 remember name=Nexus")
+def remember(arg: str) -> str:
+    if "=" not in arg:
+        return "用法: remember <键>=<值>"
+    key, _, value = arg.partition("=")
+    key = key.strip()
+    if not key:
+        return "用法: remember <键>=<值>"
+    _MEMORY[key] = value.strip()
+    return f"已记住 {key}"
+
+
+@registry.register("recall", "读取已记住的值，如 recall name")
+def recall(key: str) -> str:
+    key = key.strip()
+    if not key:
+        return "用法: recall <键>"
+    return _MEMORY.get(key, f"未记住: {key}")
+
+
+@registry.register("forget", "删除已记住的键，如 forget name")
+def forget(key: str) -> str:
+    key = key.strip()
+    if _MEMORY.pop(key, None) is not None:
+        return f"已遗忘 {key}"
+    return f"未记住: {key}"
+
+
+def memory_snapshot() -> dict[str, str]:
+    """返回当前记忆快照（供测试与调试使用，生产可替换为持久化）。"""
+    return dict(_MEMORY)
+
+
+def memory_clear() -> None:
+    """清空记忆（测试隔离用）。"""
+    _MEMORY.clear()
