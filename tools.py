@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import json
 import pathlib
 import urllib.request
 
@@ -83,3 +84,43 @@ def memory_snapshot() -> dict[str, str]:
 def memory_clear() -> None:
     """清空记忆（测试隔离用）。"""
     _MEMORY.clear()
+
+
+def memory_save(path: str) -> str:
+    """把记忆持久化到 JSON 文件。
+
+    演示如何把进程内状态落盘——换成 SQLite / Redis 时，
+    ``remember`` / ``recall`` 的对外契约无需改变。
+    """
+    try:
+        p = pathlib.Path(path)
+        if p.parent != pathlib.Path(""):
+            p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(
+            json.dumps(_MEMORY, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        return f"已保存 {len(_MEMORY)} 条记忆到 {path}"
+    except OSError as exc:
+        return f"保存失败: {exc}"
+
+
+def memory_load(path: str) -> str:
+    """从 JSON 文件恢复记忆（**替换**当前记忆）。
+
+    文件缺失或格式非法时保持现有记忆不变，只返回提示——不抛异常，
+    避免一次坏文件毁掉整个 Agent 会话。
+    """
+    p = pathlib.Path(path)
+    if not p.is_file():
+        return f"文件不存在: {path}"
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (ValueError, OSError) as exc:
+        return f"读取失败: {exc}"
+    if not isinstance(data, dict):
+        return f"读取失败: {path} 顶层不是 JSON 对象"
+
+    restored = {str(k): str(v) for k, v in data.items()}
+    _MEMORY.clear()
+    _MEMORY.update(restored)
+    return f"已载入 {len(_MEMORY)} 条记忆"

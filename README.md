@@ -32,8 +32,16 @@ and plugging in an LLM callback upgrades it to natural-language driven.
 xuange
 ```
 
-记忆默认存在进程内字典里（重启即清空）。要持久化，把 `tools.py` 里的
-`_MEMORY` 换成 SQLite / Redis 即可——`remember`/`recall`/`forget` 的对外契约不变。
+记忆默认存在进程内字典里（重启即清空）。需要跨进程保留时，用配套的持久化函数：
+
+```python
+from tools import memory_save, memory_load
+
+memory_save("./memory.json")   # 落盘
+memory_load("./memory.json")   # 恢复（替换语义，坏文件不会破坏现有记忆）
+```
+
+底层换成 SQLite / Redis 时，`remember` / `recall` / `forget` 的对外契约无需改变。
 
 ## 接入真实 LLM
 

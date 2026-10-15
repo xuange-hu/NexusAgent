@@ -10,6 +10,8 @@
 - `llm_adapters.py`：用标准库实现的 OpenAI 兼容 LLM 适配器（零 SDK 依赖），
   密钥走环境变量、默认仅允许 https 端点、输出稳健解析（容忍代码围栏，失败退化为 echo）。
 - 规划器支持 `remember` / `recall` / `forget` 前缀，且优先级高于"含数字即 calc"启发式。
+- 记忆持久化：`memory_save` / `memory_load`（JSON 落盘，替换语义；文件缺失或格式非法时
+  保持现有记忆并只返回提示，不抛异常）。
 - 导入 `agent` 时自动注册全部工具（含记忆工具）。
 
 ### Tests
