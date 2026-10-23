@@ -73,23 +73,16 @@ def rule_based_plan(query: str) -> tuple[str, str]:
     """无 LLM 时的本地规则规划：识别意图 -> (tool, arg)。
 
     离线规则只能覆盖少量显式前缀；更复杂的意图需要接入 ``llm`` 回调。
+
+    前缀关键字按大小写不敏感匹配（``CALC`` 与 ``calc`` 等价），但截取参数时
+    保留用户原始输入的大小写——绝不改写字面量，避免 ``1+1`` 之外的表达式被悄悄改变。
     """
     q = query.strip()
-    if q.lower().startswith("calc "):
-        return "calc", q.split("calc ", 1)[-1]
-    if q.lower().startswith("web_fetch "):
-        return "web_fetch", q.split("web_fetch ", 1)[-1]
-    if q.lower().startswith("read_file "):
-        return "read_file", q.split("read_file ", 1)[-1]
-    if q.lower().startswith("echo "):
-        return "echo", q.split("echo ", 1)[-1]
+    # 关键字大小写不敏感匹配；参数从原串对应位置切片，保持原始大小写
+    for kw in ("calc", "web_fetch", "read_file", "echo", "remember", "recall", "forget"):
+        if q.lower().startswith(kw + " "):
+            return kw, q[len(kw) + 1:]
     # 记忆类前缀要排在"含数字即 calc"规则之前，避免 remember a=1+2 被误判为算式
-    if q.lower().startswith("remember "):
-        return "remember", q.split("remember ", 1)[-1]
-    if q.lower().startswith("recall "):
-        return "recall", q.split("recall ", 1)[-1]
-    if q.lower().startswith("forget "):
-        return "forget", q.split("forget ", 1)[-1]
     if any(ch.isdigit() for ch in q) and any(c in q for c in "+-*/()"):
         return "calc", q
     return "echo", q

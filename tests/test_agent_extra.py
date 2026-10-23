@@ -59,3 +59,16 @@ def test_run_with_fake_llm_unknown_tool_returns_unknown():
 def test_run_offline_calc_and_echo():
     assert run("calc 2*3+1") == "7"
     assert run("echo hello") == "hello"
+
+
+def test_rule_based_calc_keyword_case_insensitive_end_to_end():
+    # 关键字大小写不敏感，但参数原样传递给 calc，故大写前缀也应算出正确结果
+    assert run("CALC 1+1") == "2"
+    assert run("Calc 2*3") == "6"
+    assert run("CaLc 10/2") == "5.0"  # 除法产生浮点 5.0，保留 calc 真实行为
+
+
+def test_rule_based_echo_keyword_case_insensitive_preserves_arg_case():
+    # ECHO 路由到 echo 工具，参数保留原始大小写
+    assert run("ECHO Hello World") == "Hello World"
+    assert rule_based_plan("Echo foo Bar")[0] == "echo"
